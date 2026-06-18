@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CraqueLink – Conecte os Craques</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg:       #f4f1eb;
+  --surface:  #ffffff;
+  --card:     #faf9f5;
+  --border:   #dcd6cc;
+  --accent:   #5b6b3a; 
+  --green:    #3a7d44;
+  --gold:     #c2920a;
+  --red:      #c74c4c;
+  --text:     #2b2b2b;
+  --sub:      #636363;
+  --muted:    #9c9c9c;
+  --radius:   12px;
+  --shadow:   0 4px 12px rgba(0,0,0,0.04);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100dvh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  position: relative; z-index: 10;
+  width: 100%; max-width: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  flex-shrink: 0;
+}
+.logo { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.4rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: opacity 0.2s; }
+.logo:hover { opacity: 0.8; }
+.logo-icon { font-size: 1.2rem; }
+.logo-craque { color: var(--text); }
+.logo-link { color: var(--accent); }
+
+.top-badges { display: flex; gap: 8px; align-items: center; }
+
+#moves-badge {
+  display: flex; align-items: center; gap: 6px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 99px; padding: 6px 14px;
+  font-size: .85rem; font-weight: 600; color: var(--sub); box-shadow: var(--shadow);
+  transition: border-color .3s;
+}
+#moves-badge.highlight { border-color: var(--red); color: var(--red); transform: scale(1.05); }
+#moves-val { font-family: 'Nunito', sans-serif; font-size: 1.15rem; font-weight: 900; color: var(--gold); min-width: 18px; text-align: center; }
+
+#btn-hint {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 99px;
+  padding: 6px 12px; font-size: .85rem; font-weight: 600; color: var(--sub);
+  cursor: pointer; box-shadow: var(--shadow); transition: all .2s; font-family: 'Inter', sans-serif;
+}
+#btn-hint:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── CHALLENGE BAR ── */
+#challenge-bar {
+  position: relative; z-index: 10; width: 100%; max-width: 500px; padding: 4px 16px 12px; flex-shrink: 0;
+}
+.challenge-inner {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow);
+}
+.player-pill {
+  flex: 1; display: flex; align-items: center; gap: 10px; background: var(--card);
+  border-radius: 10px; padding: 8px 10px; min-width: 0; border: 1px solid var(--border);
+}
+.pill-avatar {
+  width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
+  background: var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+}
+.pill-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.pill-info { min-width: 0; }
+.pill-name { font-weight: 700; font-size: .85rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pill-nat  { font-size: .7rem; color: var(--sub); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+.vs-arrow { font-size: 1.1rem; font-weight: bold; color: var(--muted); flex-shrink: 0; }
+
+#hint-display {
+  display: none; background: #fff8e1; border: 1px solid #fde08b; border-radius: 8px;
+  padding: 8px 12px; font-size: .8rem; font-weight: 600; color: #9c7300; margin-top: 8px; text-align: center;
+}
+
+/* ── CHAIN AREA ── */
+#chain-area { position: relative; z-index: 10; width: 100%; max-width: 500px; flex: 1; overflow-y: auto; padding: 4px 16px 8px; scrollbar-width: none; scroll-behavior: smooth; }
+#chain-area::-webkit-scrollbar { display: none; }
+.chain-list { display: flex; flex-direction: column; }
+.chain-node { display: flex; gap: 0; animation: nodePop .35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes nodePop { from { opacity:0; transform: translateY(15px) scale(0.95); } to { opacity:1; transform: translateY(0) scale(1); } }
+
+.tl-col { width: 44px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
+.tl-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 18px; position: relative; z-index: 2; border: 2px solid var(--surface); }
+.tl-dot.d-start  { background: var(--gold);   }
+.tl-dot.d-player { background: var(--green);  }
+.tl-dot.d-club   { background: var(--accent); }
+.tl-dot.d-target { background: var(--border); }
+.tl-line { width: 2px; flex: 1; min-height: 12px; background: var(--border); margin: 0; transition: background 0.3s; }
+.tl-line.lit { background: var(--accent); opacity: 0.5; }
+
+.node-content { flex: 1; padding: 6px 0 6px 8px; min-width: 0; }
+.node-card { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; box-shadow: var(--shadow); }
+.node-card.nc-start  { border-left: 4px solid var(--gold); }
+.node-card.nc-player { border-left: 4px solid var(--green); }
+.node-card.nc-club   { border-left: 4px solid var(--accent); }
+.node-card.nc-target { border: 1px dashed var(--border); background: transparent; opacity: 0.6; box-shadow: none; }
+
+.node-img { width: 40px; height: 40px; border-radius: 6px; flex-shrink: 0; background: var(--card); object-fit: contain; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow: hidden; padding: 2px;}
+.node-img.round { border-radius: 50%; padding: 0; }
+.node-img img { width: 100%; height: 100%; object-fit: contain; }
+.node-img img.player-img { object-fit: cover; border-radius: 50%; }
+
+.node-text { flex: 1; min-width: 0; }
+.node-name { font-weight: 700; font-size: .9rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.node-sub  { font-size: .75rem; color: var(--sub); margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+.node-badge { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); flex-shrink: 0; margin-left: auto; }
+
+/* ── INPUT AREA ── */
+#input-area { position: relative; z-index: 10; width: 100%; max-width: 500px; padding: 8px 16px 24px; flex-shrink: 0; }
+.input-label { font-size: .8rem; font-weight: 600; color: var(--sub); margin-bottom: 10px; padding-left: 2px; }
+.search-row { display: flex; gap: 10px; position: relative; }
+#search {
+  flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; color: var(--text); font-size: 1rem; font-family: 'Inter', sans-serif; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); transition: border-color .2s, box-shadow .2s;
+}
+#search::placeholder { color: var(--muted); }
+#search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91, 107, 58, 0.1); }
+
+.err-shake { animation: shake .4s cubic-bezier(.36,.07,.19,.97) both; border-color: var(--red) !important; color: var(--red); }
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+#btn-giveup {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 16px;
+  color: var(--sub); font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .2s; font-family: 'Inter', sans-serif;
+}
+#btn-giveup:hover { background: #faeaea; border-color: var(--red); color: var(--red); }
+
+/* ── DROPDOWN ── */
+#dropdown {
+  display: none; position: absolute; bottom: calc(100% + 8px); left: 0; right: 88px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; z-index: 100; max-height: 260px; overflow-y: auto; box-shadow: 0 -4px 24px rgba(0,0,0,.08);
+}
+.drop-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+.drop-item:last-child { border-bottom: none; }
+.drop-item:hover, .drop-item.sel { background: var(--bg); border-left: 3px solid var(--accent); padding-left: 13px; }
+.drop-thumb { width: 36px; height: 36px; border-radius: 6px; flex-shrink: 0; background: var(--card); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; overflow: hidden; padding: 2px;}
+.drop-thumb.round { border-radius: 50%; padding: 0; }
+.drop-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.drop-thumb img.player-img { object-fit: cover; border-radius: 50%; }
+.drop-info { flex: 1; min-width: 0; }
+.drop-name { font-weight: 600; font-size: .88rem; color: var(--text); }
+.drop-sub  { font-size: .75rem; color: var(--sub); margin-top: 2px; }
+.no-results { padding: 24px 16px; text-align: center; font-size: .9rem; color: var(--muted); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(16px);
+  background: var(--red); border-radius: 99px; padding: 10px 22px; font-size: .84rem; font-weight: 600;
+  color: #fff; opacity: 0; pointer-events: none; z-index: 500; white-space: nowrap; transition: opacity .2s, transform .2s; box-shadow: 0 4px 24px rgba(199,76,76,.4);
+}
+#toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+
+/* ── OVERLAYS (WIN / PAST DAYS) ── */
+.overlay {
+  display: none; position: fixed; inset: 0; background: rgba(244, 241, 235, 0.85); z-index: 1000;
+  align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 24px;
+}
+.overlay.show { display: flex; }
+.win-sheet, .modal-sheet { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 420px; box-shadow: 0 12px 32px rgba(0,0,0,.1); text-align: center; animation: modalIn .3s ease; position: relative; z-index: 1001; }
+@keyframes modalIn { from { transform: scale(0.95); opacity:0; } to { transform: scale(1); opacity:1; } }
+.win-emoji-big { font-size: 3.5rem; line-height: 1; margin-bottom: 16px; }
+.win-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.8rem; color: var(--text); margin-bottom: 8px; }
+.win-sub { font-size: .95rem; color: var(--sub); line-height: 1.5; margin-bottom: 24px; }
+.win-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 24px; }
+.ws-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 8px; }
+.ws-val { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.6rem; color: var(--accent); line-height: 1; }
+.ws-label { font-size: .65rem; color: var(--sub); margin-top: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.win-path { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px; font-size: .85rem; line-height: 1.8; color: var(--text); text-align: center; }
+.win-path .wp-player { font-weight: 700; }
+.win-path .wp-club   { font-weight: 700; color: var(--accent); }
+.win-path .wp-arrow  { color: var(--muted); padding: 0 4px; }
+.win-btns { display: flex; flex-direction: column; gap: 12px; }
+.wbtn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: opacity .15s, transform .12s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.wbtn:active { transform: scale(.98); }
+.wbtn-primary   { background: var(--accent); color: #fff; }
+.wbtn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+/* Lista de Dias Anteriores */
+.past-days-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; }
+.past-day-btn { background: var(--card); border: 1px solid var(--border); padding: 14px; border-radius: 12px; cursor: pointer; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; color: var(--text); }
+.past-day-btn:hover { border-color: var(--accent); color: var(--accent); }
+.past-day-date { color: var(--sub); font-size: 0.85rem; }
+
+.confetti {
+  position: fixed; width: 10px; height: 10px; z-index: 800; top: -10px;
+  animation: fall linear forwards;
+}
+@keyframes fall {
+  to { transform: translateY(105vh) rotate(720deg); }
+}
+
+/* ── INTRO ── */
+#intro { position: fixed; inset: 0; z-index: 900; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
+.intro-wrap { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; padding: 16px 0; }
+.intro-logo-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 8px;}
+.intro-ball { font-size: 2.5rem; }
+.intro-logo-text { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 2.8rem; letter-spacing: -1px; }
+.ila { color: var(--accent); }
+.intro-tagline { font-size: 1rem; color: var(--sub); line-height: 1.5; margin-bottom: 8px; }
+
+/* Novo Box de Tutorial */
+.tutorial-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px 20px; text-align: left; font-size: 0.9rem; color: var(--sub); line-height: 1.5;
+  box-shadow: var(--shadow); width: 100%;
+}
+.tutorial-box p { margin-bottom: 8px; color: var(--text); }
+.tutorial-box ul { padding-left: 20px; margin-top: 8px; }
+.tutorial-box li { margin-bottom: 8px; }
+.tutorial-box li strong { color: var(--text); }
+
+.btn-play { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); padding: 16px; font-size: 1rem; font-weight: 700; font-family: 'Inter', sans-serif; cursor: pointer; transition: transform .12s; display: flex; align-items: center; justify-content: center; gap: 8px;}
+.btn-play:active { transform: scale(.98); }
+.btn-outline { background: var(--surface); color: var(--text); border: 2px solid var(--border); }
+
+/* Patrocínio Box */
+.sponsor-box {
+  margin-top: 16px; padding: 16px; border: 1.5px dashed var(--gold); border-radius: 12px;
+  background: #fffdf5; font-size: 0.85rem; color: var(--sub); width: 100%;
+}
+.sponsor-title { font-weight: 800; color: var(--gold); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;}
+.sponsor-box p { margin-bottom: 8px; }
+.sponsor-box a { color: var(--accent); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;}
+.sponsor-box a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <div class="intro-wrap">
+    <div class="intro-logo-wrap">
+      <div class="intro-ball">⚽</div>
+      <div class="intro-logo-text">Craque<span class="ila">Link</span></div>
+    </div>
+    <p class="intro-tagline">O desafio diário de conexões do futebol.</p>
+    
+    <div class="tutorial-box">
+      <p><strong>Como jogar:</strong></p>
+      <ul>
+        <li>Conecte os dois jogadores alternando entre <strong>Clube</strong> e <strong>Colega de Time</strong>.</li>
+        <li>Eles precisam ter dividido o <strong>elenco no mesmo ano</strong>!</li>
+        <li>Pense bem: cada chute errado adiciona <strong>+1 lance</strong> na sua pontuação.</li>
+      </ul>
+    </div>
+    
+    <div style="display:flex; flex-direction:column; width:100%; gap:10px;">
+      <button class="btn-play" id="btn-daily">📅 Desafio de Hoje</button>
+      <button class="btn-play btn-outline" id="btn-past-days">📆 Jogar Dias Anteriores</button>
+      <button class="btn-play btn-outline" id="btn-free">🔀 Treino Livre</button>
+    </div>
+
+    <div class="sponsor-box">
+      <span class="sponsor-title">💡 Patrocine Aqui</span>
+      <p>Quer exibir sua marca para milhares de fãs de futebol?</p>
+      <a href="https://instagram.com/kauantarchetti" target="_blank">Fale com @kauantarchetti ↗</a>
+    </div>
+
+  </div>
+</div>
+
+<div class="overlay" id="past-overlay">
+  <div class="modal-sheet">
+    <div class="win-title">Dias Anteriores</div>
+    <div class="win-sub">Escolha uma data para jogar</div>
+    <div class="past-days-list" id="past-days-list">
+      </div>
+    <button class="wbtn wbtn-secondary" id="btn-close-past">Voltar</button>
+  </div>
+</div>
+
+<div id="topbar">
+  <div class="logo" id="btn-home" title="Voltar ao início">
+    <span class="logo-icon">⚽</span><span class="logo-craque">Craque</span><span class="logo-link">Link</span>
+  </div>
+  <div class="top-badges">
+    <button id="btn-hint">💡 Dica Inteligente</button>
+    <div id="moves-badge">Lances: <span id="moves-val">0</span></div>
+  </div>
+</div>
+
+<div id="challenge-bar">
+  <div class="challenge-inner">
+    <div class="player-pill">
+      <div class="pill-avatar" id="start-av"></div>
+      <div class="pill-info">
+        <div class="pill-name" id="start-nm"></div>
+        <div class="pill-nat" id="start-nt"></div>
+      </div>
+    </div>
+    <div class="vs-arrow">→</div>
+    <div class="player-pill">
+      <div class="pill-avatar" id="target-av"></div>
+      <div class="pill-info">
+        <div class="pill-name" id="target-nm"></div>
+        <div class="pill-nat" id="target-nt"></div>
+      </div>
+    </div>
+  </div>
+  <div id="hint-display"></div>
+</div>
+
+<div id="chain-area"><div class="chain-list" id="chain-list"></div></div>
+
+<div id="input-area">
+  <div class="input-label" id="input-label">Escolha um clube</div>
+  <div class="search-row">
+    <div id="dropdown"></div>
+    <input id="search" type="text" placeholder="Buscar…" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button id="btn-giveup">Desistir</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div class="overlay" id="win-overlay">
+  <div class="win-sheet">
+    <div class="win-emoji-big" id="we">🏆</div>
+    <div class="win-title" id="wt">Craque!</div>
+    <div class="win-sub" id="ws">Você conectou os jogadores.</div>
+    
+    <div class="win-stats">
+      <div class="ws-box"><div class="ws-val" id="wv-moves">–</div><div class="ws-label">Lances</div></div>
+      <div class="ws-box"><div class="ws-val" id="wv-steps">–</div><div class="ws-label">Clubes</div></div>
+      <div class="ws-box"><div class="ws-val" id="wv-rarity">–</div><div class="ws-label">Raridade</div></div>
+    </div>
+    
+    <div class="win-path" id="win-path"></div>
+    
+    <div class="win-btns">
+      <button class="wbtn wbtn-primary" id="btn-share">Copiar Resultado</button>
+      <button class="wbtn wbtn-secondary" id="btn-next">Próximo Desafio →</button>
+      <button class="wbtn wbtn-secondary" id="btn-home-win">🏠 Menu Inicial</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// LOGOS ATUALIZADAS SVG
+// ═══════════════════════════════════════════════
+const CLUB_LOGOS = {
+  'barcelona':'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg',
+  'real-madrid':'https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg',
+  'atletico-madrid':'https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_Madrid_2017_logo.svg',
+  'ac-milan':'https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg',
+  'inter-milan':'https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg',
+  'juventus':'https://upload.wikimedia.org/wikipedia/commons/b/bc/Juventus_FC_-_Logotipo_2017.svg',
+  'napoli':'https://upload.wikimedia.org/wikipedia/commons/2/2d/SSC_Napoli.svg',
+  'roma':'https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282017%29.svg',
+  'fiorentina':'https://upload.wikimedia.org/wikipedia/commons/e/e0/ACF_Fiorentina_2022.svg',
+  'manchester-united':'https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg',
+  'manchester-city':'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg',
+  'chelsea':'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg',
+  'liverpool':'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
+  'arsenal':'https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg',
+  'tottenham':'https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg',
+  'everton':'https://upload.wikimedia.org/wikipedia/en/7/7c/Everton_FC_logo.svg',
+  'paris-sg':'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg',
+  'lyon':'https://upload.wikimedia.org/wikipedia/en/e/e4/Olympique_Lyonnais_%28logo%29.svg',
+  'monaco':'https://upload.wikimedia.org/wikipedia/en/b/ba/AS_Monaco_FC.svg',
+  'marseille':'https://upload.wikimedia.org/wikipedia/commons/d/d8/Olympique_Marseille_logo.svg',
+  'bayern-munich':'https://upload.wikimedia.org/wikipedia/commons/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282002%E2%80%932017%29.svg',
+  'dortmund':'https://upload.wikimedia.org/wikipedia/commons/6/67/Borussia_Dortmund_logo.svg',
+  'leverkusen':'https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg',
+  'ajax':'https://upload.wikimedia.org/wikipedia/en/7/79/Ajax_Amsterdam.svg',
+  'psv':'https://upload.wikimedia.org/wikipedia/en/0/05/PSV_Eindhoven.svg',
+  'porto':'https://upload.wikimedia.org/wikipedia/en/f/f1/FC_Porto.svg',
+  'benfica':'https://upload.wikimedia.org/wikipedia/en/6/6e/SL_Benfica.svg',
+  'sporting-cp':'https://upload.wikimedia.org/wikipedia/en/8/8e/Sporting_CP_%E2%80%93_Sporting_Clube_de_Portugal.svg',
+  'sevilla':'https://upload.wikimedia.org/wikipedia/en/3/3b/Sevilla_FC_logo.svg',
+  'valencia':'https://upload.wikimedia.org/wikipedia/en/c/ce/Valenciacf.svg',
+  'inter-miami':'https://upload.wikimedia.org/wikipedia/en/8/82/Inter_Miami_CF_logo_%282023%29.svg',
+  'al-nassr':'https://upload.wikimedia.org/wikipedia/en/4/46/Al-Nassr_FC.svg',
+  'al-hilal':'https://upload.wikimedia.org/wikipedia/en/d/d4/Al_Hilal_Saudi_FC_Logo.svg',
+  'sao-paulo':'https://upload.wikimedia.org/wikipedia/commons/4/4b/S%C3%A3o_Paulo_Futebol_Clube.png',
+  'palmeiras':'https://upload.wikimedia.org/wikipedia/commons/1/10/Palmeiras_logo.svg',
+  'corinthians':'https://upload.wikimedia.org/wikipedia/en/8/82/Sport_Club_Corinthians_Paulista.svg',
+  'santos':'https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Futebol_Clube_logo.svg',
+  'flamengo':'https://upload.wikimedia.org/wikipedia/commons/2/2e/Flamengo_braz_logo.svg',
+  'fluminense':'https://upload.wikimedia.org/wikipedia/commons/a/ad/Fluminense_FC_escudo.png',
+  'vasco':'https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png',
+  'botafogo':'https://upload.wikimedia.org/wikipedia/commons/c/cb/Escudo_Botafogo.png',
+  'cruzeiro':'https://upload.wikimedia.org/wikipedia/commons/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg',
+  'atletico-mineiro':'https://upload.wikimedia.org/wikipedia/commons/5/5f/Atletico_mineiro_galo.png',
+  'gremio':'https://upload.wikimedia.org/wikipedia/commons/0/05/Gr%C3%AAmio_FBPA_logo.svg',
+  'internacional':'https://upload.wikimedia.org/wikipedia/commons/f/f1/Escudo_do_Sport_Club_Internacional.svg',
+  'athletico-pr':'https://upload.wikimedia.org/wikipedia/commons/b/b3/Athletico_Paranaense_logo.svg',
+  'bahia':'https://upload.wikimedia.org/wikipedia/en/2/22/Esporte_Clube_Bahia_logo.svg',
+  'sport':'https://upload.wikimedia.org/wikipedia/commons/a/a2/Sport_Club_do_Recife.png',
+  'coritiba':'https://upload.wikimedia.org/wikipedia/commons/3/38/Coritiba_FBC_logo.svg',
+  'parma':'https://upload.wikimedia.org/wikipedia/commons/9/99/Parma_Calcio_1913_logo.svg',
+  'fenerbahce':'https://upload.wikimedia.org/wikipedia/en/3/39/Fenerbah%C3%A7e.svg'
+};
+
+function getPlayerImg(id, flag) { return flag || '⚽'; }
+
+// ═══════════════════════════════════════════════
+// BASE DE DADOS MUNDIAL + CORINGAS DO BRASILEIRÃO
+// ═══════════════════════════════════════════════
+const CLUBS = {
+  'barcelona':{name:'FC Barcelona', country:'Espanha'}, 'real-madrid':{name:'Real Madrid', country:'Espanha'}, 'atletico-madrid':{name:'Atlético de Madrid', country:'Espanha'}, 'sevilla':{name:'Sevilla FC', country:'Espanha'}, 'valencia':{name:'Valencia CF', country:'Espanha'},
+  'ac-milan':{name:'AC Milan', country:'Itália'}, 'inter-milan':{name:'Inter de Milão', country:'Itália'}, 'juventus':{name:'Juventus', country:'Itália'}, 'napoli':{name:'Napoli', country:'Itália'}, 'roma':{name:'AS Roma', country:'Itália'}, 'fiorentina':{name:'Fiorentina', country:'Itália'}, 'parma':{name:'Parma', country:'Itália'},
+  'manchester-united':{name:'Manchester United', country:'Inglaterra'}, 'manchester-city':{name:'Manchester City', country:'Inglaterra'}, 'chelsea':{name:'Chelsea FC', country:'Inglaterra'}, 'liverpool':{name:'Liverpool FC', country:'Inglaterra'}, 'arsenal':{name:'Arsenal FC', country:'Inglaterra'}, 'tottenham':{name:'Tottenham Hotspur', country:'Inglaterra'}, 'everton':{name:'Everton FC', country:'Inglaterra'},
+  'paris-sg':{name:'Paris Saint-Germain', country:'França'}, 'lyon':{name:'Olympique Lyonnais', country:'França'}, 'monaco':{name:'AS Monaco', country:'França'}, 'marseille':{name:'Olympique de Marseille', country:'França'},
+  'bayern-munich':{name:'Bayern de Munique', country:'Alemanha'}, 'dortmund':{name:'Borussia Dortmund', country:'Alemanha'}, 'leverkusen':{name:'Bayer Leverkusen', country:'Alemanha'},
+  'ajax':{name:'AFC Ajax', country:'Holanda'}, 'psv':{name:'PSV Eindhoven', country:'Holanda'},
+  'porto':{name:'FC Porto', country:'Portugal'}, 'benfica':{name:'SL Benfica', country:'Portugal'}, 'sporting-cp':{name:'Sporting CP', country:'Portugal'},
+  'fenerbahce':{name:'Fenerbahçe', country:'Turquia'},
+  'inter-miami':{name:'Inter Miami CF', country:'EUA'}, 'al-nassr':{name:'Al-Nassr FC', country:'Arábia'}, 'al-hilal':{name:'Al-Hilal', country:'Arábia'},
+  
+  'sao-paulo':{name:'São Paulo FC', country:'Brasil'}, 'palmeiras':{name:'Palmeiras', country:'Brasil'}, 'corinthians':{name:'Corinthians', country:'Brasil'}, 'santos':{name:'Santos FC', country:'Brasil'}, 'flamengo':{name:'Flamengo', country:'Brasil'}, 'fluminense':{name:'Fluminense', country:'Brasil'}, 'vasco':{name:'Vasco da Gama', country:'Brasil'}, 'botafogo':{name:'Botafogo', country:'Brasil'}, 'cruzeiro':{name:'Cruzeiro', country:'Brasil'}, 'atletico-mineiro':{name:'Atlético Mineiro', country:'Brasil'}, 'gremio':{name:'Grêmio', country:'Brasil'}, 'internacional':{name:'Internacional', country:'Brasil'}, 'athletico-pr':{name:'Athletico Paranaense', country:'Brasil'}, 'bahia':{name:'Bahia', country:'Brasil'}, 'sport':{name:'Sport Recife', country:'Brasil'}, 'coritiba':{name:'Coritiba', country:'Brasil'}
+};
+
+const PLAYERS = {
+  // Lendas e Antigos
+  'pele': { name:'Pelé', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'santos',y1:1956,y2:1974}] },
+  'maradona': { name:'Diego Maradona', flag:'🇦🇷', nat:'Argentina', rarity: 3, clubs:[{id:'barcelona',y1:1982,y2:1984}, {id:'napoli',y1:1984,y2:1991}] },
+  'ronaldo-r9': { name:'Ronaldo Fenômeno', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'cruzeiro',y1:1993,y2:1994}, {id:'psv',y1:1994,y2:1996}, {id:'barcelona',y1:1996,y2:1997}, {id:'inter-milan',y1:1997,y2:2002}, {id:'real-madrid',y1:2002,y2:2007}, {id:'ac-milan',y1:2007,y2:2008}, {id:'corinthians',y1:2009,y2:2011}] },
+  'ronaldinho': { name:'Ronaldinho Gaúcho', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'gremio',y1:1998,y2:2001}, {id:'paris-sg',y1:2001,y2:2003}, {id:'barcelona',y1:2003,y2:2008}, {id:'ac-milan',y1:2008,y2:2011}, {id:'flamengo',y1:2011,y2:2012}, {id:'atletico-mineiro',y1:2012,y2:2014}, {id:'fluminense',y1:2015,y2:2015}] },
+  'kaka': { name:'Kaká', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'sao-paulo',y1:2001,y2:2003}, {id:'ac-milan',y1:2003,y2:2009}, {id:'real-madrid',y1:2009,y2:2013}, {id:'ac-milan',y1:2013,y2:2014}, {id:'sao-paulo',y1:2014,y2:2014}] },
+  'rivaldo': { name:'Rivaldo', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'palmeiras',y1:1994,y2:1996}, {id:'barcelona',y1:1997,y2:2002}, {id:'ac-milan',y1:2002,y2:2003}, {id:'cruzeiro',y1:2004,y2:2004}, {id:'sao-paulo',y1:2011,y2:2011}] },
+  'romario': { name:'Romário', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'vasco',y1:1985,y2:1988}, {id:'psv',y1:1988,y2:1993}, {id:'barcelona',y1:1993,y2:1995}, {id:'flamengo',y1:1995,y2:1999}, {id:'vasco',y1:2000,y2:2002}, {id:'fluminense',y1:2002,y2:2004}, {id:'vasco',y1:2005,y2:2006}] },
+  'zidane': { name:'Zinédine Zidane', flag:'🇫🇷', nat:'França', rarity: 3, clubs:[{id:'juventus',y1:1996,y2:2001}, {id:'real-madrid',y1:2001,y2:2006}] },
+  'cafu': { name:'Cafu', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'sao-paulo',y1:1989,y2:1994}, {id:'palmeiras',y1:1995,y2:1997}, {id:'roma',y1:1997,y2:2003}, {id:'ac-milan',y1:2003,y2:2008}] },
+  'roberto-carlos': { name:'Roberto Carlos', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'palmeiras',y1:1993,y2:1995}, {id:'inter-milan',y1:1995,y2:1996}, {id:'real-madrid',y1:1996,y2:2007}, {id:'corinthians',y1:2010,y2:2011}] },
+  'rogerio-ceni': { name:'Rogério Ceni', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'sao-paulo',y1:1990,y2:2015}] },
+  'marcos': { name:'Marcos', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'palmeiras',y1:1992,y2:2011}] },
+
+  // Geração Recente / Atual (Mundo)
+  'messi': { name:'Lionel Messi', flag:'🇦🇷', nat:'Argentina', rarity: 1, clubs:[{id:'barcelona',y1:2004,y2:2021}, {id:'paris-sg',y1:2021,y2:2023}, {id:'inter-miami',y1:2023,y2:2026}] },
+  'cr7': { name:'Cristiano Ronaldo', flag:'🇵🇹', nat:'Portugal', rarity: 1, clubs:[{id:'sporting-cp',y1:2002,y2:2003}, {id:'manchester-united',y1:2003,y2:2009}, {id:'real-madrid',y1:2009,y2:2018}, {id:'juventus',y1:2018,y2:2021}, {id:'manchester-united',y1:2021,y2:2022}, {id:'al-nassr',y1:2023,y2:2026}] },
+  'neymar': { name:'Neymar', flag:'🇧🇷', nat:'Brasil', rarity: 1, clubs:[{id:'santos',y1:2009,y2:2013}, {id:'barcelona',y1:2013,y2:2017}, {id:'paris-sg',y1:2017,y2:2023}, {id:'al-hilal',y1:2023,y2:2026}] },
+  'suarez': { name:'Luis Suárez', flag:'🇺🇾', nat:'Uruguai', rarity: 2, clubs:[{id:'ajax',y1:2007,y2:2011}, {id:'liverpool',y1:2011,y2:2014}, {id:'barcelona',y1:2014,y2:2020}, {id:'atletico-madrid',y1:2020,y2:2022}, {id:'gremio',y1:2023,y2:2023}, {id:'inter-miami',y1:2024,y2:2026}] },
+  'mbappe': { name:'Kylian Mbappé', flag:'🇫🇷', nat:'França', rarity: 1, clubs:[{id:'monaco',y1:2015,y2:2018}, {id:'paris-sg',y1:2017,y2:2024}, {id:'real-madrid',y1:2024,y2:2026}] },
+  'haaland': { name:'Erling Haaland', flag:'🇳🇴', nat:'Noruega', rarity: 1, clubs:[{id:'dortmund',y1:2020,y2:2022}, {id:'manchester-city',y1:2022,y2:2026}] },
+  'de-bruyne': { name:'Kevin De Bruyne', flag:'🇧🇪', nat:'Bélgica', rarity: 1, clubs:[{id:'chelsea',y1:2012,y2:2014}, {id:'manchester-city',y1:2015,y2:2026}] },
+  'salah': { name:'Mohamed Salah', flag:'🇪🇬', nat:'Egito', rarity: 1, clubs:[{id:'chelsea',y1:2014,y2:2015}, {id:'roma',y1:2015,y2:2017}, {id:'liverpool',y1:2017,y2:2026}] },
+  'lewandowski': { name:'Robert Lewandowski', flag:'🇵🇱', nat:'Polônia', rarity: 2, clubs:[{id:'dortmund',y1:2010,y2:2014}, {id:'bayern-munich',y1:2014,y2:2022}, {id:'barcelona',y1:2022,y2:2026}] },
+  'griezmann': { name:'Antoine Griezmann', flag:'🇫🇷', nat:'França', rarity: 2, clubs:[{id:'atletico-madrid',y1:2014,y2:2019}, {id:'barcelona',y1:2019,y2:2021}, {id:'atletico-madrid',y1:2021,y2:2026}] },
+  'vini-jr': { name:'Vinícius Jr.', flag:'🇧🇷', nat:'Brasil', rarity: 1, clubs:[{id:'flamengo',y1:2017,y2:2018}, {id:'real-madrid',y1:2018,y2:2026}] },
+  'rodrygo': { name:'Rodrygo', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'santos',y1:2017,y2:2019}, {id:'real-madrid',y1:2019,y2:2026}] },
+  'endrick': { name:'Endrick', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'palmeiras',y1:2022,y2:2024}, {id:'real-madrid',y1:2024,y2:2026}] },
+  'bellingham': { name:'Jude Bellingham', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', nat:'Inglaterra', rarity: 2, clubs:[{id:'dortmund',y1:2020,y2:2023}, {id:'real-madrid',y1:2023,y2:2026}] },
+  'kane': { name:'Harry Kane', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', nat:'Inglaterra', rarity: 2, clubs:[{id:'tottenham',y1:2009,y2:2023}, {id:'bayern-munich',y1:2023,y2:2026}] },
+  'son': { name:'Heung-min Son', flag:'🇰🇷', nat:'Coreia do Sul', rarity: 2, clubs:[{id:'leverkusen',y1:2013,y2:2015}, {id:'tottenham',y1:2015,y2:2026}] },
+  'ibrahimovic': { name:'Zlatan Ibrahimović', flag:'🇸🇪', nat:'Suécia', rarity: 2, clubs:[{id:'ajax',y1:2001,y2:2004}, {id:'juventus',y1:2004,y2:2006}, {id:'inter-milan',y1:2006,y2:2009}, {id:'barcelona',y1:2009,y2:2010}, {id:'ac-milan',y1:2010,y2:2012}, {id:'paris-sg',y1:2012,y2:2016}, {id:'manchester-united',y1:2016,y2:2018}, {id:'ac-milan',y1:2020,y2:2023}] },
+  'modric': { name:'Luka Modrić', flag:'🇭🇷', nat:'Croácia', rarity: 1, clubs:[{id:'tottenham',y1:2008,y2:2012}, {id:'real-madrid',y1:2012,y2:2026}] },
+  'kroos': { name:'Toni Kroos', flag:'🇩🇪', nat:'Alemanha', rarity: 1, clubs:[{id:'bayern-munich',y1:2007,y2:2014}, {id:'real-madrid',y1:2014,y2:2024}] },
+  'iniesta': { name:'Andrés Iniesta', flag:'🇪🇸', nat:'Espanha', rarity: 1, clubs:[{id:'barcelona',y1:2002,y2:2018}] },
+  'xavi': { name:'Xavi Hernández', flag:'🇪🇸', nat:'Espanha', rarity: 1, clubs:[{id:'barcelona',y1:1998,y2:2015}] },
+  'rooney': { name:'Wayne Rooney', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', nat:'Inglaterra', rarity: 2, clubs:[{id:'everton',y1:2002,y2:2004}, {id:'manchester-united',y1:2004,y2:2017}, {id:'everton',y1:2017,y2:2018}] },
+  'aguero': { name:'Sergio Agüero', flag:'🇦🇷', nat:'Argentina', rarity: 2, clubs:[{id:'atletico-madrid',y1:2006,y2:2011}, {id:'manchester-city',y1:2011,y2:2021}, {id:'barcelona',y1:2021,y2:2021}] },
+  'neuer': { name:'Manuel Neuer', flag:'🇩🇪', nat:'Alemanha', rarity: 2, clubs:[{id:'bayern-munich',y1:2011,y2:2026}] },
+  'courtois': { name:'Thibaut Courtois', flag:'🇧🇪', nat:'Bélgica', rarity: 2, clubs:[{id:'atletico-madrid',y1:2011,y2:2014}, {id:'chelsea',y1:2014,y2:2018}, {id:'real-madrid',y1:2018,y2:2026}] },
+
+  // --- Destaques do Brasileirão e Seleção ---
+  'gabigol': { name:'Gabigol', flag:'🇧🇷', nat:'Brasil', rarity: 1, clubs:[{id:'santos',y1:2013,y2:2016}, {id:'inter-milan',y1:2016,y2:2017}, {id:'benfica',y1:2017,y2:2018}, {id:'santos',y1:2018,y2:2018}, {id:'flamengo',y1:2019,y2:2024}, {id:'cruzeiro',y1:2025,y2:2026}] },
+  'arrascaeta': { name:'De Arrascaeta', flag:'🇺🇾', nat:'Uruguai', rarity: 2, clubs:[{id:'cruzeiro',y1:2015,y2:2018}, {id:'flamengo',y1:2019,y2:2026}] },
+  'cassio': { name:'Cássio', flag:'🇧🇷', nat:'Brasil', rarity: 1, clubs:[{id:'gremio',y1:2006,y2:2007}, {id:'psv',y1:2007,y2:2011}, {id:'corinthians',y1:2012,y2:2024}, {id:'cruzeiro',y1:2024,y2:2026}] },
+  'lucas-moura': { name:'Lucas Moura', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'sao-paulo',y1:2010,y2:2012}, {id:'paris-sg',y1:2013,y2:2018}, {id:'tottenham',y1:2018,y2:2023}, {id:'sao-paulo',y1:2023,y2:2026}] },
+  'ganso': { name:'P.H. Ganso', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'santos',y1:2008,y2:2012}, {id:'sao-paulo',y1:2012,y2:2016}, {id:'sevilla',y1:2016,y2:2018}, {id:'fluminense',y1:2019,y2:2026}] },
+  'dudu': { name:'Dudu', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'cruzeiro',y1:2009,y2:2011}, {id:'gremio',y1:2014,y2:2014}, {id:'palmeiras',y1:2015,y2:2026}] },
+  'hulk': { name:'Hulk', flag:'🇧🇷', nat:'Brasil', rarity: 1, clubs:[{id:'porto',y1:2008,y2:2012}, {id:'zenit',y1:2012,y2:2016}, {id:'atletico-mineiro',y1:2021,y2:2026}] },
+  'weverton': { name:'Weverton', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'corinthians',y1:2007,y2:2009}, {id:'athletico-pr',y1:2012,y2:2017}, {id:'palmeiras',y1:2018,y2:2026}] },
+  'raphael-veiga': { name:'Raphael Veiga', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'palmeiras',y1:2017,y2:2026}, {id:'athletico-pr',y1:2018,y2:2018}] },
+  'pedro': { name:'Pedro', flag:'🇧🇷', nat:'Brasil', rarity: 1, clubs:[{id:'fluminense',y1:2016,y2:2019}, {id:'fiorentina',y1:2019,y2:2020}, {id:'flamengo',y1:2020,y2:2026}] },
+  'diego-costa': { name:'Diego Costa', flag:'🇪🇸', nat:'Espanha', rarity: 3, clubs:[{id:'atletico-madrid',y1:2010,y2:2014}, {id:'chelsea',y1:2014,y2:2017}, {id:'atletico-madrid',y1:2018,y2:2020}, {id:'atletico-mineiro',y1:2021,y2:2021}, {id:'botafogo',y1:2023,y2:2023}, {id:'gremio',y1:2024,y2:2025}] },
+  'everton-ribeiro': { name:'Éverton Ribeiro', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'corinthians',y1:2007,y2:2011}, {id:'cruzeiro',y1:2013,y2:2014}, {id:'flamengo',y1:2017,y2:2023}, {id:'bahia',y1:2024,y2:2026}] },
+  'felipe-melo': { name:'Felipe Melo', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'flamengo',y1:2001,y2:2003}, {id:'cruzeiro',y1:2003,y2:2004}, {id:'gremio',y1:2004,y2:2004}, {id:'juventus',y1:2009,y2:2011}, {id:'inter-milan',y1:2015,y2:2017}, {id:'palmeiras',y1:2017,y2:2021}, {id:'fluminense',y1:2022,y2:2026}] },
+  'david-luiz': { name:'David Luiz', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'benfica',y1:2007,y2:2011}, {id:'chelsea',y1:2011,y2:2014}, {id:'paris-sg',y1:2014,y2:2016}, {id:'chelsea',y1:2016,y2:2019}, {id:'arsenal',y1:2019,y2:2021}, {id:'flamengo',y1:2021,y2:2026}] },
+  'dani-alves': { name:'Daniel Alves', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'bahia',y1:2001,y2:2002}, {id:'sevilla',y1:2002,y2:2008}, {id:'barcelona',y1:2008,y2:2016}, {id:'juventus',y1:2016,y2:2017}, {id:'paris-sg',y1:2017,y2:2019}, {id:'sao-paulo',y1:2019,y2:2021}, {id:'barcelona',y1:2021,y2:2022}] },
+  'thiago-silva': { name:'Thiago Silva', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'fluminense',y1:2006,y2:2008}, {id:'ac-milan',y1:2009,y2:2012}, {id:'paris-sg',y1:2012,y2:2020}, {id:'chelsea',y1:2020,y2:2024}, {id:'fluminense',y1:2024,y2:2026}] },
+  'marcelo': { name:'Marcelo', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'fluminense',y1:2005,y2:2006}, {id:'real-madrid',y1:2007,y2:2022}, {id:'fluminense',y1:2023,y2:2026}] },
+  'calleri': { name:'Jonathan Calleri', flag:'🇦🇷', nat:'Argentina', rarity: 2, clubs:[{id:'sao-paulo',y1:2016,y2:2016}, {id:'sao-paulo',y1:2021,y2:2026}] },
+  'lucas-paqueta': { name:'Lucas Paquetá', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'flamengo',y1:2016,y2:2018}, {id:'ac-milan',y1:2018,y2:2020}, {id:'lyon',y1:2020,y2:2022}, {id:'west-ham',y1:2022,y2:2026}] },
+  'bruno-guimaraes': { name:'Bruno Guimarães', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'athletico-pr',y1:2017,y2:2020}, {id:'lyon',y1:2020,y2:2022}] },
+  'raphinha': { name:'Raphinha', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'sporting-cp',y1:2018,y2:2019}, {id:'barcelona',y1:2022,y2:2026}] },
+  'alisson': { name:'Alisson', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'internacional',y1:2013,y2:2016}, {id:'roma',y1:2016,y2:2018}, {id:'liverpool',y1:2018,y2:2026}] },
+  'ederson': { name:'Ederson', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'sao-paulo',y1:2008,y2:2009}, {id:'benfica',y1:2015,y2:2017}, {id:'manchester-city',y1:2017,y2:2026}] },
+  'casemiro': { name:'Casemiro', flag:'🇧🇷', nat:'Brasil', rarity: 1, clubs:[{id:'sao-paulo',y1:2010,y2:2013}, {id:'real-madrid',y1:2013,y2:2022}, {id:'porto',y1:2014,y2:2015}, {id:'manchester-united',y1:2022,y2:2026}] },
+  'fred': { name:'Fred', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'cruzeiro',y1:2004,y2:2005}, {id:'lyon',y1:2005,y2:2009}, {id:'fluminense',y1:2009,y2:2016}, {id:'atletico-mineiro',y1:2016,y2:2017}, {id:'cruzeiro',y1:2018,y2:2019}, {id:'fluminense',y1:2020,y2:2022}] },
+  'diego-ribas': { name:'Diego Ribas', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'santos',y1:2002,y2:2004}, {id:'porto',y1:2004,y2:2006}, {id:'juventus',y1:2009,y2:2010}, {id:'atletico-madrid',y1:2011,y2:2012}, {id:'flamengo',y1:2016,y2:2022}] },
+  'fernandinho': { name:'Fernandinho', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'athletico-pr',y1:2002,y2:2005}, {id:'manchester-city',y1:2013,y2:2022}, {id:'athletico-pr',y1:2022,y2:2026}] },
+  'payet': { name:'Dimitri Payet', flag:'🇫🇷', nat:'França', rarity: 2, clubs:[{id:'marseille',y1:2013,y2:2015}, {id:'marseille',y1:2017,y2:2023}, {id:'vasco',y1:2023,y2:2026}] },
+
+  // --- NOVOS JOGADORES CORINGAS ---
+  'juninho': { name:'Juninho Pernambucano', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'sport',y1:1993,y2:1994}, {id:'vasco',y1:1995,y2:2001}, {id:'lyon',y1:2001,y2:2009}, {id:'vasco',y1:2011,y2:2013}] },
+  'alex': { name:'Alex', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'coritiba',y1:1995,y2:1997}, {id:'palmeiras',y1:1997,y2:2000}, {id:'flamengo',y1:2000,y2:2000}, {id:'cruzeiro',y1:2001,y2:2004}, {id:'parma',y1:2002,y2:2002}, {id:'fenerbahce',y1:2004,y2:2012}, {id:'coritiba',y1:2013,y2:2014}] },
+  'dida': { name:'Dida', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'cruzeiro',y1:1994,y2:1998}, {id:'corinthians',y1:1999,y2:2002}, {id:'ac-milan',y1:2000,y2:2010}, {id:'gremio',y1:2013,y2:2013}, {id:'internacional',y1:2014,y2:2015}] },
+  'diego-souza': { name:'Diego Souza', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'fluminense',y1:2003,y2:2005}, {id:'flamengo',y1:2005,y2:2006}, {id:'gremio',y1:2007,y2:2007}, {id:'palmeiras',y1:2008,y2:2010}, {id:'atletico-mineiro',y1:2010,y2:2011}, {id:'vasco',y1:2011,y2:2012}, {id:'cruzeiro',y1:2013,y2:2013}, {id:'sport',y1:2014,y2:2017}, {id:'sao-paulo',y1:2018,y2:2019}, {id:'botafogo',y1:2019,y2:2019}, {id:'gremio',y1:2020,y2:2023}, {id:'sport',y1:2023,y2:2023}] },
+  'thiago-neves': { name:'Thiago Neves', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'fluminense',y1:2007,y2:2008}, {id:'flamengo',y1:2011,y2:2011}, {id:'fluminense',y1:2012,y2:2013}, {id:'cruzeiro',y1:2017,y2:2019}, {id:'gremio',y1:2020,y2:2020}, {id:'sport',y1:2020,y2:2021}] },
+  'marquinhos': { name:'Marquinhos', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'corinthians',y1:2012,y2:2013}, {id:'roma',y1:2012,y2:2013}, {id:'paris-sg',y1:2013,y2:2026}] },
+  'alexandre-pato': { name:'Alexandre Pato', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'internacional',y1:2006,y2:2007}, {id:'ac-milan',y1:2007,y2:2013}, {id:'corinthians',y1:2013,y2:2014}, {id:'sao-paulo',y1:2014,y2:2015}, {id:'chelsea',y1:2016,y2:2016}, {id:'sao-paulo',y1:2019,y2:2020}, {id:'sao-paulo',y1:2023,y2:2023}] },
+  'jo': { name:'Jô', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'corinthians',y1:2003,y2:2005}, {id:'manchester-city',y1:2008,y2:2011}, {id:'everton',y1:2009,y2:2009}, {id:'atletico-mineiro',y1:2012,y2:2015}, {id:'corinthians',y1:2017,y2:2017}, {id:'corinthians',y1:2020,y2:2022}] },
+  'kannemann': { name:'Walter Kannemann', flag:'🇦🇷', nat:'Argentina', rarity: 2, clubs:[{id:'gremio',y1:2016,y2:2026}] },
+  'd-alessandro': { name:"D'Alessandro", flag:'🇦🇷', nat:'Argentina', rarity: 2, clubs:[{id:'internacional',y1:2008,y2:2020}, {id:'internacional',y1:2022,y2:2022}] },
+  'richarlison': { name:'Richarlison', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'fluminense',y1:2016,y2:2017}, {id:'everton',y1:2018,y2:2022}, {id:'tottenham',y1:2022,y2:2026}] },
+  'fabinho': { name:'Fabinho', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'real-madrid',y1:2012,y2:2013}, {id:'monaco',y1:2013,y2:2018}, {id:'liverpool',y1:2018,y2:2023}] },
+  'bruno-henrique': { name:'Bruno Henrique', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'santos',y1:2017,y2:2019}, {id:'flamengo',y1:2019,y2:2026}] },
+  'filipe-luis': { name:'Filipe Luís', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'atletico-madrid',y1:2010,y2:2014}, {id:'chelsea',y1:2014,y2:2015}, {id:'atletico-madrid',y1:2015,y2:2019}, {id:'flamengo',y1:2019,y2:2023}] },
+  'diego-alves': { name:'Diego Alves', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'valencia',y1:2011,y2:2017}, {id:'flamengo',y1:2017,y2:2022}] },
+  'gerson': { name:'Gerson', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'fluminense',y1:2014,y2:2016}, {id:'roma',y1:2016,y2:2018}, {id:'fiorentina',y1:2018,y2:2019}, {id:'flamengo',y1:2019,y2:2021}, {id:'marseille',y1:2021,y2:2023}, {id:'flamengo',y1:2023,y2:2026}] },
+  'willian-arao': { name:'Willian Arão', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'corinthians',y1:2012,y2:2014}, {id:'botafogo',y1:2015,y2:2015}, {id:'flamengo',y1:2016,y2:2022}] },
+  'rodrigo-caio': { name:'Rodrigo Caio', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'sao-paulo',y1:2011,y2:2018}, {id:'flamengo',y1:2019,y2:2023}, {id:'gremio',y1:2024,y2:2024}] },
+  'guerrero': { name:'Paolo Guerrero', flag:'🇵🇪', nat:'Peru', rarity: 2, clubs:[{id:'bayern-munich',y1:2002,y2:2006}, {id:'corinthians',y1:2012,y2:2015}, {id:'flamengo',y1:2015,y2:2018}, {id:'internacional',y1:2018,y2:2021}] },
+  'paulinho': { name:'Paulinho', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'corinthians',y1:2010,y2:2013}, {id:'tottenham',y1:2013,y2:2015}, {id:'barcelona',y1:2017,y2:2018}, {id:'corinthians',y1:2022,y2:2024}] },
+  'fagner': { name:'Fagner', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'vasco',y1:2011,y2:2013}, {id:'corinthians',y1:2014,y2:2026}] },
+  'gustavo-gomez': { name:'Gustavo Gómez', flag:'🇵🇾', nat:'Paraguai', rarity: 2, clubs:[{id:'ac-milan',y1:2016,y2:2018}, {id:'palmeiras',y1:2018,y2:2026}] },
+  'rony': { name:'Rony', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'athletico-pr',y1:2018,y2:2020}, {id:'palmeiras',y1:2020,y2:2026}] },
+  'miranda': { name:'Miranda', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'sao-paulo',y1:2006,y2:2011}, {id:'atletico-madrid',y1:2011,y2:2015}, {id:'inter-milan',y1:2015,y2:2019}, {id:'sao-paulo',y1:2021,y2:2022}] },
+  'luis-fabiano': { name:'Luis Fabiano', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'sao-paulo',y1:2001,y2:2004}, {id:'porto',y1:2004,y2:2005}, {id:'sevilla',y1:2005,y2:2011}, {id:'sao-paulo',y1:2011,y2:2015}, {id:'vasco',y1:2017,y2:2017}] },
+  'cano': { name:'Germán Cano', flag:'🇦🇷', nat:'Argentina', rarity: 2, clubs:[{id:'vasco',y1:2020,y2:2021}, {id:'fluminense',y1:2022,y2:2026}] },
+  'geromel': { name:'Pedro Geromel', flag:'🇧🇷', nat:'Brasil', rarity: 3, clubs:[{id:'gremio',y1:2014,y2:2024}] },
+  'everton-cebolinha': { name:'Everton Cebolinha', flag:'🇧🇷', nat:'Brasil', rarity: 2, clubs:[{id:'gremio',y1:2014,y2:2020}, {id:'benfica',y1:2020,y2:2022}, {id:'flamengo',y1:2022,y2:2026}] }
+};
+
+// ═══════════════════════════════════════════════
+// MESCLAR PASSAGENS DO MESMO CLUBE
+// ═══════════════════════════════════════════════
+function normalizePlayerData() {
+  Object.keys(PLAYERS).forEach(pid => {
+    let p = PLAYERS[pid];
+    let mergedClubs = {};
+    p.clubs.forEach(c => {
+      if (!mergedClubs[c.id]) {
+        mergedClubs[c.id] = { id: c.id, y1: c.y1, y2: c.y2 };
+      } else {
+        mergedClubs[c.id].y2 = Math.max(mergedClubs[c.id].y2, c.y2);
+        mergedClubs[c.id].y1 = Math.min(mergedClubs[c.id].y1, c.y1);
+      }
+    });
+    p.clubs = Object.values(mergedClubs);
+  });
+}
+normalizePlayerData();
+
+// ═══════════════════════════════════════════════
+// STATE E VARIÁVEIS GLOBAIS
+// ═══════════════════════════════════════════════
+let challenge = null;
+let chain = [];
+let moves = 0;
+let hintsUsed = 0;
+let expectType = 'club';
+let lastPlayerInChain = null;
+let dropItems = [];
+let dropSel = -1;
+let isDailyMode = false;
+let currentDailyDate = null;
+let toastTm = null;
+
+// ═══════════════════════════════════════════════
+// ALGORITMO GERADOR DETERMINÍSTICO (PRNG)
+// ═══════════════════════════════════════════════
+function mulberry32(a) {
+  return function() {
+    var t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+
+function generateChallengeForDate(dateObj) {
+  const seed = dateObj.getFullYear() * 10000 + (dateObj.getMonth() + 1) * 100 + dateObj.getDate();
+  let prng = mulberry32(seed);
+
+  const playersKeys = Object.keys(PLAYERS);
+  let startIdx = Math.floor(prng() * playersKeys.length);
+  let currentPid = playersKeys[startIdx];
+  const startPid = currentPid;
+  
+  const steps = Math.floor(prng() * 2) + 2; 
+  
+  for (let i = 0; i < steps; i++) {
+    const currentPData = PLAYERS[currentPid];
+    const availableClubs = currentPData.clubs;
+    if (!availableClubs.length) break;
+    
+    const clubIdx = Math.floor(prng() * availableClubs.length);
+    const chosenClubHistory = availableClubs[clubIdx];
+    
+    const potentialPlayers = [];
+    Object.keys(PLAYERS).forEach(pid => {
+      if (pid === currentPid) return;
+      const h = PLAYERS[pid].clubs.find(c => c.id === chosenClubHistory.id);
+      if (h && Math.max(h.y1, chosenClubHistory.y1) <= Math.min(h.y2, chosenClubHistory.y2)) {
+        potentialPlayers.push(pid);
+      }
+    });
+    
+    if (potentialPlayers.length > 0) {
+      const pIdx = Math.floor(prng() * potentialPlayers.length);
+      currentPid = potentialPlayers[pIdx];
+    } else {
+      break;
+    }
+  }
+  
+  const targetPid = currentPid;
+  if (startPid === targetPid) {
+    return generateChallengeForDate(new Date(dateObj.getTime() + 86400000));
+  }
+  
+  return { start: startPid, target: targetPid };
+}
+
+// ═══════════════════════════════════════════════
+// INIT E NAVEGAÇÃO
+// ═══════════════════════════════════════════════
+document.getElementById('btn-daily').addEventListener('click', () => { 
+  isDailyMode = true; 
+  currentDailyDate = new Date(); 
+  startGame(); 
+});
+
+document.getElementById('btn-free').addEventListener('click', () => { 
+  isDailyMode = false; 
+  startGame(); 
+});
+
+document.getElementById('btn-past-days').addEventListener('click', renderPastDaysModal);
+document.getElementById('btn-close-past').addEventListener('click', () => {
+  document.getElementById('past-overlay').classList.remove('show');
+});
+
+function goHome() {
+  document.getElementById('win-overlay').classList.remove('show');
+  document.getElementById('intro').style.display = 'flex';
+  document.getElementById('chain-list').innerHTML = '';
+  document.getElementById('search').value = '';
+  document.getElementById('hint-display').style.display = 'none';
+  closeDropdown();
+}
+
+document.getElementById('btn-home').addEventListener('click', goHome);
+document.getElementById('btn-home-win').addEventListener('click', goHome);
+
+function renderPastDaysModal() {
+  const listEl = document.getElementById('past-days-list');
+  listEl.innerHTML = '';
+  
+  const today = new Date();
+  for (let i = 1; i <= 7; i++) {
+    const pastDate = new Date(today);
+    pastDate.setDate(today.getDate() - i);
+    
+    const dayStr = pastDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
+    const btn = document.createElement('div');
+    btn.className = 'past-day-btn';
+    btn.innerHTML = `
+      <span>Desafio #${pastDate.getDate()}${pastDate.getMonth()+1}</span>
+      <span class="past-day-date">${dayStr}</span>
+    `;
+    // ATENÇÃO: Aqui conectamos o evento de clique do dia anterior corretamente
+    btn.addEventListener('click', () => {
+      document.getElementById('past-overlay').classList.remove('show');
+      isDailyMode = true;
+      currentDailyDate = pastDate;
+      startGame();
+    });
+    listEl.appendChild(btn);
+  }
+  document.getElementById('past-overlay').classList.add('show');
+}
+
+// Fecha o modal de dias anteriores se clicar fora da janelinha
+document.getElementById('past-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'past-overlay') {
+    document.getElementById('past-overlay').classList.remove('show');
+  }
+});
+
+function startGame() {
+  document.getElementById('intro').style.display = 'none';
+  loadChallenge();
+  setTimeout(() => document.getElementById('search').focus(), 100);
+}
+
+function loadChallenge() {
+  if (isDailyMode) {
+    challenge = generateChallengeForDate(currentDailyDate);
+  } else {
+    const randomSeedDate = new Date(Date.now() - Math.floor(Math.random() * 10000000000));
+    challenge = generateChallengeForDate(randomSeedDate);
+  }
+  
+  chain = []; moves = 0; hintsUsed = 0; expectType = 'club'; lastPlayerInChain = challenge.start;
+  document.getElementById('hint-display').style.display = 'none';
+  
+  renderPills(); renderChain(); updateMoves(); updateInputLabel();
+  document.getElementById('search').value = ''; closeDropdown();
+}
+
+function renderPills() {
+  const sp = PLAYERS[challenge.start]; const tp = PLAYERS[challenge.target];
+  document.getElementById('start-av').innerHTML = `<div class="pill-avatar">${getPlayerImg(challenge.start, sp.flag)}</div>`;
+  document.getElementById('start-nm').textContent = sp.name; document.getElementById('start-nt').innerHTML = `${sp.flag} ${sp.nat}`;
+  document.getElementById('target-av').innerHTML = `<div class="pill-avatar">${getPlayerImg(challenge.target, tp.flag)}</div>`;
+  document.getElementById('target-nm').textContent = tp.name; document.getElementById('target-nt').innerHTML = `${tp.flag} ${tp.nat}`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDERIZAÇÃO DA LINHA DO TEMPO
+// ═══════════════════════════════════════════════
+function renderChain() {
+  const list = document.getElementById('chain-list'); list.innerHTML = '';
+  const sp = PLAYERS[challenge.start]; const tp = PLAYERS[challenge.target];
+  const won = chain.length > 0 && chain[chain.length-1].type === 'player' && chain[chain.length-1].id === challenge.target;
+
+  addNode(list, { type:'player', id:challenge.start, data:sp, role:'start' }, false);
+  chain.forEach((item) => addNode(list, { ...item, role: item.type }, true));
+  if (!won) addNode(list, { type:'player', id:challenge.target, data:tp, role:'target' }, chain.length > 0);
+
+  setTimeout(() => { const area = document.getElementById('chain-area'); area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' }); }, 60);
+}
+
+function addNode(list, item, hasLineAbove) {
+  const node = document.createElement('div'); node.className = 'chain-node';
+  const dotCls = item.role === 'start' ? 'd-start' : item.role === 'target' ? 'd-target' : item.type === 'player' ? 'd-player' : 'd-club';
+  const cardCls = item.role === 'start' ? 'nc-start' : item.role === 'target' ? 'nc-target' : item.type === 'player' ? 'nc-player' : 'nc-club';
+  const badgeTxt = item.role === 'start' ? 'Início' : item.role === 'target' ? 'Alvo' : item.type === 'player' ? 'Jogador': 'Clube';
+
+  let imgHtml = item.type === 'player' 
+    ? `<div class="node-img round">${getPlayerImg(item.id, item.data.flag)}</div>`
+    : `<div class="node-img">${CLUB_LOGOS[item.id] ? `<img src="${CLUB_LOGOS[item.id]}" alt="">` : '🏟️'}</div>`;
+    
+  const subTxt = item.subTxt || (item.type === 'player' ? `${item.data.flag} ${item.data.nat}` : `🌍 ${item.data.country}`);
+
+  node.innerHTML = `
+    <div class="tl-col">${hasLineAbove ? `<div class="tl-line lit"></div>` : ''}<div class="tl-dot ${dotCls}"></div><div class="tl-line"></div></div>
+    <div class="node-content">
+      <div class="node-card ${cardCls}">
+        ${imgHtml}
+        <div class="node-text"><div class="node-name">${item.data.name}</div><div class="node-sub">${subTxt}</div></div>
+        <span class="node-badge">${badgeTxt}</span>
+      </div>
+    </div>`;
+  list.appendChild(node);
+}
+
+// ═══════════════════════════════════════════════
+// LÓGICA DE INPUT E PESQUISA
+// ═══════════════════════════════════════════════
+function updateInputLabel() {
+  const el = document.getElementById('input-label');
+  if (expectType === 'club') {
+    el.innerHTML = `Onde <strong>${PLAYERS[lastPlayerInChain]?.name}</strong> jogou?`;
+    document.getElementById('search').placeholder = 'Buscar qualquer clube…';
+  } else {
+    el.innerHTML = `Quem esteve no <strong>${chain[chain.length-1]?.data?.name}</strong>?`;
+    document.getElementById('search').placeholder = 'Buscar qualquer jogador…';
+  }
+}
+
+function updateMoves() {
+  document.getElementById('moves-val').textContent = moves;
+}
+
+function flashError(msg) {
+  moves++; updateMoves();
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTm); toastTm = setTimeout(() => el.classList.remove('show'), 3000);
+  
+  const s = document.getElementById('search');
+  s.classList.remove('err-shake'); void s.offsetWidth; s.classList.add('err-shake');
+  setTimeout(() => s.focus(), 100); 
+}
+
+function matchesQuery(name, query) {
+  const words = name.toLowerCase().split(/[\s-]+/);
+  return words.some(w => w.startsWith(query));
+}
+
+const searchInput = document.getElementById('search');
+
+searchInput.addEventListener('input', e => {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) return closeDropdown();
+  
+  dropItems = [];
+  if (expectType === 'club') {
+    Object.keys(CLUBS).forEach(cid => {
+      if (matchesQuery(CLUBS[cid].name, q)) dropItems.push({ type:'club', id:cid, data:CLUBS[cid] });
+    });
+  } else {
+    Object.keys(PLAYERS).forEach(pid => {
+      if (matchesQuery(PLAYERS[pid].name, q)) dropItems.push({ type:'player', id:pid, data:PLAYERS[pid] });
+    });
+  }
+  showDropdown();
+});
+
+searchInput.addEventListener('keydown', e => {
+  const dd = document.getElementById('dropdown');
+  const items = dd.querySelectorAll('.drop-item');
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    dropSel = Math.min(dropSel + 1, items.length - 1);
+    highlightDropdownItems(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    dropSel = Math.max(dropSel - 1, 0);
+    highlightDropdownItems(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (dropSel >= 0 && items[dropSel]) {
+      pick(dropSel);
+    } else if (items.length > 0) {
+      pick(0);
+    }
+  } else if (e.key === 'Escape') {
+    closeDropdown();
+  }
+});
+
+function highlightDropdownItems(items) {
+  items.forEach((el, i) => {
+    if (i === dropSel) {
+      el.classList.add('sel');
+      el.scrollIntoView({ block: 'nearest' });
+    } else {
+      el.classList.remove('sel');
+    }
+  });
+}
+
+function showDropdown() {
+  const dd = document.getElementById('dropdown');
+  dropSel = -1;
+  if (!dropItems.length) { dd.innerHTML = `<div class="no-results">Nenhum resultado</div>`; dd.style.display = 'block'; return; }
+  dd.innerHTML = '';
+  dropItems.slice(0,6).forEach((item, i) => {
+    const div = document.createElement('div'); div.className = 'drop-item';
+    let thumbHtml = item.type === 'club' 
+      ? `<div class="drop-thumb">${CLUB_LOGOS[item.id]?`<img src="${CLUB_LOGOS[item.id]}" alt="">`:''}</div>`
+      : `<div class="drop-thumb round">${getPlayerImg(item.id, item.data.flag)}</div>`;
+      
+    let sub = item.type === 'club' ? item.data.country : `${item.data.flag} ${item.data.nat}`;
+
+    div.innerHTML = `${thumbHtml}<div class="drop-info"><div class="drop-name">${item.data.name}</div><div class="drop-sub">${sub}</div></div>`;
+    div.addEventListener('click', () => pick(i)); dd.appendChild(div);
+  });
+  dd.style.display = 'block';
+}
+
+function closeDropdown() { document.getElementById('dropdown').style.display = 'none'; dropItems = []; dropSel = -1; }
+
+function pick(idx) {
+  const item = dropItems[idx]; if (!item) return;
+  document.getElementById('search').value = ''; closeDropdown();
+  
+  setTimeout(() => document.getElementById('search').focus(), 50);
+
+  if (expectType === 'club') {
+    const p = PLAYERS[lastPlayerInChain];
+    const history = p.clubs.find(c => c.id === item.id);
+    if (!history) return flashError(`${p.name} nunca jogou no ${item.data.name}! (+1 Lance)`);
+    item.subTxt = `${item.data.country} • ${history.y1} - ${history.y2}`;
+  } else {
+    const lastClub = chain[chain.length-1];
+    const p = PLAYERS[item.id];
+    const pHistory = p.clubs.find(c => c.id === lastClub.id);
+    if (!pHistory) return flashError(`${p.name} nunca jogou no ${lastClub.data.name}! (+1 Lance)`);
+    
+    // Verificando a sobreposição de tempo no clube!
+    let prevPId = pathLengthIs1() ? lastPlayerInChain : chain[chain.length-2].id;
+    // Opcionalmente, eu posso pegar o objeto do jogador anterior com lastPlayerInChain
+    const prevP = PLAYERS[lastPlayerInChain];
+    const prevHistory = prevP.clubs.find(c => c.id === lastClub.id);
+    const overlap = Math.max(pHistory.y1, prevHistory.y1) <= Math.min(pHistory.y2, prevHistory.y2);
+    if (!overlap) return flashError(`${p.name} e ${prevP.name} não dividiram o elenco! Eras diferentes. (+1 Lance)`);
+    
+    item.subTxt = `${item.data.flag} ${item.data.nat} • Jogou de ${pHistory.y1} a ${pHistory.y2}`;
+  }
+
+  chain.push(item); moves++; document.getElementById('hint-display').style.display = 'none'; hintsUsed = 0;
+  
+  if (item.type === 'player') { lastPlayerInChain = item.id; expectType = 'club'; } 
+  else { expectType = 'player'; }
+
+  updateMoves(); renderChain(); updateInputLabel();
+  if (item.type === 'player' && item.id === challenge.target) setTimeout(() => showWin(false), 450);
+}
+
+function pathLengthIs1() { return chain.length === 1; }
+
+// ═══════════════════════════════════════════════
+// DICAS INTELIGENTES (BFS CORRIGIDO)
+// ═══════════════════════════════════════════════
+document.getElementById('btn-hint').addEventListener('click', () => {
+  let startType = expectType === 'club' ? 'player' : 'club';
+  let startId = expectType === 'club' ? lastPlayerInChain : chain[chain.length-1].id;
+
+  let queue = [ [{type: startType, id: startId}] ];
+  let visited = new Set();
+  visited.add(startType + '-' + startId);
+  let validPath = null;
+
+  while(queue.length > 0) {
+    let path = queue.shift();
+    let current = path[path.length - 1];
+
+    if (current.type === 'player' && current.id === challenge.target) {
+        validPath = path;
+        break;
+    }
+
+    if (current.type === 'player') {
+        let pData = PLAYERS[current.id];
+        for (let c of pData.clubs) {
+            let cKey = 'club-' + c.id;
+            if (!visited.has(cKey)) {
+                queue.push([...path, {type: 'club', id: c.id}]);
+                visited.add(cKey);
+            }
+        }
+    } else {
+        // CORREÇÃO: Pegar o jogador que acabou de jogar neste clube (no caminho BFS)
+        let prevPlayerId = path.length > 1 ? path[path.length - 2].id : lastPlayerInChain;
+        let prevPlayerHistory = PLAYERS[prevPlayerId].clubs.find(x => x.id === current.id);
+        
+        Object.keys(PLAYERS).forEach(pid => {
+            if (pid === prevPlayerId) return;
+            let h = PLAYERS[pid].clubs.find(x => x.id === current.id);
+            if (h && Math.max(h.y1, prevPlayerHistory.y1) <= Math.min(h.y2, prevPlayerHistory.y2)) {
+                let pKey = 'player-' + pid;
+                if (!visited.has(pKey)) {
+                    queue.push([...path, {type: 'player', id: pid}]);
+                    visited.add(pKey);
+                }
+            }
+        });
+    }
+  }
+
+  if (!validPath || validPath.length < 2) {
+      return flashError("Beco sem saída! Nenhuma conexão leva ao alvo.");
+  }
+
+  let nextStep = validPath[1];
+  let ans = nextStep.type === 'club' ? CLUBS[nextStep.id] : PLAYERS[nextStep.id];
+
+  hintsUsed++; moves += hintsUsed; updateMoves();
+  let text = "";
+  
+  if (hintsUsed === 1) text = expectType==='club' ? `Dica 1: Fica em ${ans.country}` : `Dica 1: Nasceu em ${ans.nat}`;
+  else if (hintsUsed === 2) text = `Dica 2: A primeira letra é "${ans.name.charAt(0)}"`;
+  else text = `Resposta direta: ${ans.name}`;
+  
+  document.getElementById('hint-display').textContent = text;
+  document.getElementById('hint-display').style.display = 'block';
+});
+
+document.getElementById('btn-giveup').addEventListener('click', () => showWin(true));
+
+// ═══════════════════════════════════════════════
+// WIN SCREEN & CONFETTI
+// ═══════════════════════════════════════════════
+function spawnConfetti() {
+  const colors = ['#5b6b3a', '#c2920a', '#3a7d44', '#3b82f6'];
+  for (let i = 0; i < 40; i++) {
+    const cf = document.createElement('div');
+    cf.className = 'confetti';
+    cf.style.left = Math.random() * 100 + 'vw';
+    cf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    cf.style.animationDuration = (Math.random() * 1.5 + 1.5) + 's';
+    cf.style.animationDelay = (Math.random() * 0.5) + 's';
+    document.body.appendChild(cf);
+    setTimeout(() => cf.remove(), 3000);
+  }
+}
+
+function showWin(gaveUp) {
+  const sp = PLAYERS[challenge.start]; const tp = PLAYERS[challenge.target];
+  const clubSteps = chain.filter(i=>i.type==='club').length;
+  
+  let totalRarity = sp.rarity + tp.rarity;
+  let pCount = 2;
+  chain.forEach(i => { if(i.type==='player'){ totalRarity += i.data.rarity; pCount++; } });
+  const avgRarity = (totalRarity / pCount).toFixed(1);
+
+  if (gaveUp) {
+    document.getElementById('we').textContent = '😔'; document.getElementById('wt').textContent = 'Fim de Jogo'; document.getElementById('ws').textContent = `Não foi dessa vez.`;
+  } else {
+    document.getElementById('we').textContent = '🏆'; document.getElementById('wt').textContent = isDailyMode ? 'Desafio do Dia Concluído!' : 'Vitória!'; document.getElementById('ws').textContent = `Conexão estabelecida com sucesso.`;
+    spawnConfetti();
+  }
+
+  document.getElementById('wv-moves').textContent = gaveUp ? '–' : moves;
+  document.getElementById('wv-steps').textContent = gaveUp ? '–' : clubSteps;
+  document.getElementById('wv-rarity').textContent = gaveUp ? '–' : avgRarity;
+
+  const pathEl = document.getElementById('win-path');
+  if (!gaveUp && chain.length) {
+    let html = `<span class="wp-player">${sp.name}</span>`;
+    chain.forEach(item => {
+      if (item.type==='club') html += ` <span class="wp-arrow">→</span> <span class="wp-club">${item.data.name}</span> <span class="wp-arrow">→</span> `;
+      else html += `<span class="wp-player">${item.data.name}</span>`;
+    });
+    pathEl.innerHTML = html;
+  } else { pathEl.innerHTML = `<span class="wp-player">${sp.name}</span> <span class="wp-arrow">→ ??? →</span> <span class="wp-player">${tp.name}</span>`; }
+
+  document.getElementById('win-overlay').classList.add('show');
+}
+
+document.getElementById('btn-share').addEventListener('click', () => {
+  const modeTxt = isDailyMode ? `Desafio do Dia 📅 (${currentDailyDate.toLocaleDateString('pt-BR')})` : "Treino Livre 🔀";
+  const rarity = document.getElementById('wv-rarity').textContent;
+  const path = [PLAYERS[challenge.start].name, ...chain.map(i=>i.data.name)].join(' → ');
+  const txt = `CraqueLink ⚽ | ${modeTxt}\n${PLAYERS[challenge.start].name} → ${PLAYERS[challenge.target].name}\nLances: ${moves} | Raridade: ${rarity}💎\n${path}\nJogue em: craque.link`;
+  navigator.clipboard.writeText(txt).then(() => {
+    document.getElementById('btn-share').textContent = 'Copiado!';
+    setTimeout(() => { document.getElementById('btn-share').textContent = 'Copiar Resultado'; }, 2000);
+  });
+});
+
+document.getElementById('btn-next').addEventListener('click', () => {
+  document.getElementById('win-overlay').classList.remove('show');
+  if(isDailyMode) {
+    goHome();
+  } else {
+    loadChallenge();
+    setTimeout(() => document.getElementById('search').focus(), 100);
+  }
+});
+</script>
+</body>
+</html>
